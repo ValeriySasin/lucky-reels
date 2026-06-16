@@ -22,7 +22,7 @@ async function start(): Promise<void> {
     return;
   }
 
-  const canvas = app.canvas as HTMLCanvasElement;
+  const canvas = app.canvas;
   canvas.style.display = 'block';
   canvas.style.position = 'absolute';
   container.appendChild(canvas);

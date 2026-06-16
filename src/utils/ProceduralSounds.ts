@@ -18,7 +18,7 @@ let bgTimeout: ReturnType<typeof setTimeout> | null = null;
 function getCtx(): AudioContext {
   if (!ctx) {
     const Ctor = window.AudioContext ?? (window as ExtWindow).webkitAudioContext;
-    ctx = new Ctor!();
+    ctx = new Ctor();
     masterGain = ctx.createGain();
     masterGain.gain.value = 1;
     masterGain.connect(ctx.destination);
