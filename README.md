@@ -60,15 +60,13 @@ src/
 │   │   ├── use-symbol-slot.ts      Single AnimatedSprite — idle/win frame switching
 │   │   └── use-reel-component.ts   Full reel: mask + 3 slots + GSAP spin animation
 │   ├── spin-button/
-│   │   ├── use-spin-button.ts      Button state (disabled, colors)
-│   │   └── spin-button-component.ts  Rendered button with hover/press effects
+│   │   └── use-spin-button.ts      Rendered button with hover/press effects + disabled state
 │   ├── sound-manager/
-│   │   ├── use-sound-manager.ts    Mute state
-│   │   └── sound-manager-component.ts  Dispatches play() calls to ProceduralSounds
+│   │   └── use-sound-manager.ts    Mute state + dispatches play() calls to ProceduralSounds
 │   ├── win-banner/
-│   │   └── win-banner-component.ts  Promise-based banner: show(amount, label) resolves when done
+│   │   └── use-win-banner.ts       Promise-based banner: show(amount, label) resolves when done
 │   └── spine-character/
-│       └── spine-character-component.ts  useSpineChar — idle / spin / win / destroy
+│       └── use-spine-character.ts  useSpineChar — idle / spin / win / destroy
 ├── api/
 │   ├── http-client.ts              500ms mock delay, then mockRouter
 │   ├── game.api.ts                 gameApi.spin()
@@ -95,9 +93,9 @@ src/
 
 ## Architecture
 
-### Functional hooks
+### Factory functions instead of classes
 
-Reel components are factory functions returning `{ container, ...methods, destroy }`. Private state lives in closures. Types derive from `ReturnType<typeof useX>` — no duplicate interface declarations.
+All components are factory functions returning `{ container, ...methods, destroy }`. Private state lives in closures. Types are derived from `ReturnType<typeof useX>` — no duplicate interface declarations.
 
 ```ts
 export function useReelComponent(app, reelIndex, x, y) {
@@ -129,11 +127,11 @@ onSpinClicked()
 Each reel animates a single `obj.v` from `0` to `dist = (3 × stripLen + toGo) × SYMBOL_SIZE`. On every GSAP tick:
 
 ```ts
-const scroll = obj.v % SYMBOL_SIZE          // offset within a slot (0..199px)
+const scroll = obj.v % SYMBOL_SIZE           // offset within a slot (0..199px)
 const moved  = Math.floor(obj.v / SYMBOL_SIZE) // symbols scrolled past
 ```
 
-Three sprite slots recycle in a ring buffer. A `PIXI.Graphics` mask hides everything outside the visible row.
+Three sprite slots recycle in a ring buffer. A `PIXI.Graphics` mask placed on `app.stage` hides everything outside the visible row.
 
 ### Lazy texture cache
 
@@ -149,6 +147,5 @@ Single endpoint: `POST /game/spin`. Win probability 28%. `mockRouter` dispatches
 
 ## Documentation
 
-Full architecture, game logic breakdown, and interview Q&A:
-- [`.claude/GAME_LOGIC.md`](.claude/GAME_LOGIC.md) — scenes, spin flow, entity interactions
-- [`.claude/INTERVIEW_DEEP_DIVE.md`](.claude/INTERVIEW_DEEP_DIVE.md) — spin path, loader, API format, reel animation math
+- [`.claude/CLAUDE.md`](.claude/CLAUDE.md) — coding conventions, patterns, and best practices for this project
+- [`.claude/info.md`](.claude/info.md) — deep dive: spin flow, loader internals, API format, reel animation math
