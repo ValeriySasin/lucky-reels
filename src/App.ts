@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import '@esotericsoftware/spine-pixi-v8';
 import { GAME_WIDTH, GAME_HEIGHT } from './types/constants';
 import { PreloadScene } from './scenes/PreloadScene';
+import { LobbyScene } from './scenes/LobbyScene';
 import { GameScene } from './scenes/GameScene';
 
 async function start(): Promise<void> {
@@ -47,6 +48,12 @@ async function start(): Promise<void> {
 
   await preload.load();
   preload.destroy();
+
+  const lobby = new LobbyScene();
+  app.stage.addChild(lobby.container);
+  await lobby.waitForClick();
+  await lobby.hide();
+  lobby.destroy();
 
   const game = new GameScene(app);
   app.stage.addChild(game.container);

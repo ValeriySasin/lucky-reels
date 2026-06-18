@@ -7,22 +7,20 @@ import { SpinButtonComponent } from '@/components/spin-button/spin-button-compon
 import { SoundManagerComponent } from '@/components/sound-manager/sound-manager-component';
 import { useSpineChar, SpineCharCtx } from '@/components/spine-character/spine-character-component';
 import { WinBannerComponent } from '@/components/win-banner/win-banner-component';
-import { PaytableModalComponent } from '@/components/paytable-modal/paytable-modal-component';
 import { drawInfoBox, addLabelValue } from '@/utils/draw-helpers';
-import { gameApi, playerApi } from '@/api';
+import { gameApi } from '@/api';
 import { FontFamily, FontSize } from '@/enums/fonts';
 import { UiText } from '@/enums/ui-text';
 import { AnimDuration, AnimDurationMs, AnimEase } from '@/enums/animation';
 import { CssColor } from '@/enums/colors';
 import { ReelFrame } from '@/enums/ui-layout';
 
-const CX = GAME_WIDTH / 2;
+const CX       = GAME_WIDTH / 2;
 const FRAME_CY = Math.round(GAME_HEIGHT * 0.38);
-const FRAME_W = REEL_COUNT * SYMBOL_SIZE + (REEL_COUNT - 1) * REEL_SPACING + 60;
-const FRAME_H = SYMBOL_SIZE + 50;
-const UI_Y = Math.round(GAME_HEIGHT * 0.72);
+const FRAME_W  = REEL_COUNT * SYMBOL_SIZE + (REEL_COUNT - 1) * REEL_SPACING + 60;
+const FRAME_H  = SYMBOL_SIZE + 50;
+const UI_Y     = Math.round(GAME_HEIGHT * 0.72);
 const HEADER_Y = Math.round(GAME_HEIGHT * 0.07);
-const HELP_Y = GAME_HEIGHT - 16;
 
 export class GameScene {
   container: PIXI.Container;
@@ -33,11 +31,7 @@ export class GameScene {
   private soundManager!: SoundManagerComponent;
   private goblin!: SpineCharCtx;
   private balanceText!: PIXI.Text;
-  private betText!: PIXI.Text;
-  private betMinusBtn!: PIXI.Container;
-  private betPlusBtn!: PIXI.Container;
   private winBanner!: WinBannerComponent;
-  private paytableModal!: PaytableModalComponent;
   private soundBtn!: PIXI.Text;
   private balanceTl: gsap.core.Timeline | null = null;
   private sparkleTls: gsap.core.Timeline[] = [];
@@ -52,7 +46,6 @@ export class GameScene {
   create(): void {
     this.createBackground();
     this.createHeader();
-    // reels go before the frame so the frame PNG renders on top
     this.createReels();
     this.createReelArea();
     this.createUI();
@@ -60,16 +53,11 @@ export class GameScene {
     this.winBanner = new WinBannerComponent(CX, FRAME_CY);
     this.container.addChild(this.winBanner.container);
 
-    this.paytableModal = new PaytableModalComponent();
-    this.container.addChild(this.paytableModal.container);
-
     this.createGoblin();
 
     this.soundManager = new SoundManagerComponent();
     this.soundManager.init();
 
-    this.spinButton.setDisabled(true);
-    void this.loadPlayerData().then(() => this.spinButton.setDisabled(false));
     this.playIntroAnimation();
   }
 
@@ -186,87 +174,10 @@ export class GameScene {
     const betBg = new PIXI.Graphics();
     drawInfoBox(betBg, betX, UI_Y);
     this.container.addChild(betBg);
-    this.betText = addLabelValue(this.container, betX, UI_Y, UiText.Bet, `$${this.state.bet}`, CssColor.Gold);
-
-    this.betMinusBtn = this.createBetButton(betX - 62, UI_Y + 12, '−', () => this.changeBet(-1));
-    this.betPlusBtn  = this.createBetButton(betX + 62, UI_Y + 12, '+', () => this.changeBet(+1));
+    addLabelValue(this.container, betX, UI_Y, UiText.Bet, `$${this.state.bet}`, CssColor.Gold);
 
     this.spinButton = new SpinButtonComponent(CX, UI_Y, () => void this.onSpinClicked());
     this.container.addChild(this.spinButton.container);
-
-    const helpText = new PIXI.Text({
-      text: UiText.HelpText,
-      style: new PIXI.TextStyle({ fontFamily: FontFamily.Body, fontSize: FontSize.Sm, fill: CssColor.LavenderDim }),
-    });
-    helpText.anchor.set(0.5, 1);
-    helpText.x = CX;
-    helpText.y = HELP_Y;
-    this.container.addChild(helpText);
-
-    this.createBetButton(GAME_WIDTH - 120, GAME_HEIGHT - 60, 'ℹ', () => {
-      if (!this.state.isSpinning) this.paytableModal.show();
-    });
-  }
-
-  private createBetButton(x: number, y: number, label: string, onClick: () => void): PIXI.Container {
-    const R = 20;
-    const btn = new PIXI.Container();
-    btn.x = x;
-    btn.y = y;
-
-    const bg = new PIXI.Graphics();
-    const redraw = (hover = false) => {
-      bg.clear();
-      bg.circle(2, 3, R).fill({ color: 0x000000, alpha: 0.4 });
-      bg.circle(0, 0, R).fill(hover ? 0xffd700 : 0xb8860b);
-      bg.circle(0, 0, R - 2).fill(hover ? 0xffd700 : 0xe8a020);
-      bg.ellipse(0, -R * 0.28, R * 1.1, R * 0.55).fill({ color: 0xffffff, alpha: 0.2 });
-      bg.circle(0, 0, R).stroke({ color: hover ? 0xffee88 : 0xffd700, width: 2 });
-    };
-    redraw();
-
-    const txt = new PIXI.Text({
-      text: label,
-      style: new PIXI.TextStyle({ fontFamily: FontFamily.Heading, fontSize: FontSize.Lg, fill: CssColor.White }),
-    });
-    txt.anchor.set(0.5);
-
-    const hit = new PIXI.Graphics().circle(0, 0, R + 4).fill({ color: 0xffffff, alpha: 0 });
-    hit.eventMode = 'static';
-    hit.cursor = 'pointer';
-
-    btn.addChild(bg, txt, hit);
-    this.container.addChild(btn);
-
-    hit.on('pointerover',  () => redraw(true));
-    hit.on('pointerout',   () => redraw(false));
-    hit.on('pointerdown',  onClick);
-
-    return btn;
-  }
-
-  private changeBet(dir: 1 | -1): void {
-    if (this.state.isSpinning) return;
-    const steps = this.state.betSteps;
-    const next  = this.state.betStepIndex + dir;
-    if (next < 0 || next >= steps.length) return;
-
-    this.state.betStepIndex = next;
-    this.state.bet = steps[next];
-    this.betText.text = `$${this.state.bet}`;
-
-    gsap.fromTo(
-      this.betText.scale,
-      { x: 1.3, y: 1.3 },
-      { x: 1, y: 1, duration: AnimDuration.Slow, ease: AnimEase.BackOutHard },
-    );
-
-    this.syncBetBtnAlpha(next, steps.length);
-  }
-
-  private syncBetBtnAlpha(idx: number, len: number): void {
-    this.betMinusBtn.alpha = idx === 0 ? 0.35 : 1;
-    this.betPlusBtn.alpha  = idx === len - 1 ? 0.35 : 1;
   }
 
   private createGoblin(): void {
@@ -284,42 +195,6 @@ export class GameScene {
     gsap.from(c, { y: c.y + Math.round(GAME_HEIGHT * 0.1), alpha: 0, duration: AnimDuration.Entrance, delay: 0.4, ease: AnimEase.BackOut });
   }
 
-  private async loadPlayerData(): Promise<void> {
-    try {
-      const [profileRes, configRes] = await Promise.all([
-        playerApi.getProfile(),
-        gameApi.getConfig(),
-      ]);
-      this.state.balance = profileRes.data.balance;
-
-      const cfg   = configRes.data;
-      const steps = cfg.betSteps?.length ? cfg.betSteps : this.state.betSteps;
-      this.state.betSteps = steps;
-
-      const clamped = Math.min(Math.max(this.state.bet, cfg.betMin), cfg.betMax);
-      let idx = steps.indexOf(clamped);
-      if (idx < 0) idx = steps.findIndex(s => s >= cfg.betMin);
-      if (idx < 0) idx = 0;
-      this.state.betStepIndex = idx;
-      this.state.bet = steps[idx];
-
-      this.betText.text = `$${this.state.bet}`;
-      this.syncBetBtnAlpha(this.state.betStepIndex, steps.length);
-      this.updateBalance();
-    } catch (e) {
-      console.error('loadPlayerData failed', e);
-      const errTxt = new PIXI.Text({
-        text: '⚠ connection error',
-        style: new PIXI.TextStyle({ fontFamily: FontFamily.Body, fontSize: FontSize.Sm, fill: CssColor.ErrorRed }),
-      });
-      errTxt.anchor.set(0.5);
-      errTxt.x = CX;
-      errTxt.y = UI_Y - 60;
-      errTxt.zIndex = 50;
-      this.container.addChild(errTxt);
-    }
-  }
-
   private async onSpinClicked(): Promise<void> {
     if (!this.state.canSpin) return;
 
@@ -334,7 +209,7 @@ export class GameScene {
 
     let result;
     try {
-      result = (await gameApi.spin({ bet: this.state.bet, sessionId: 'mock-session' })).data;
+      result = (await gameApi.spin({ bet: this.state.bet })).data;
     } catch (e) {
       console.error('spin failed', e);
       this.state.balance += this.state.bet;
@@ -364,12 +239,12 @@ export class GameScene {
     await new Promise<void>(r => setTimeout(r, AnimDurationMs.SpinResultPause));
 
     this.state.balance = result.newBalance;
+    this.updateBalance();
 
     if (result.isWin) {
       this.goblin.win();
       await this.winBanner.show(result.winAmount, result.winLabel);
     } else {
-      this.updateBalance();
       this.goblin.idle();
     }
 

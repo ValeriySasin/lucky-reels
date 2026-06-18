@@ -9,5 +9,6 @@ export enum UiText {
   Bet         = 'BET',
   SoundOn     = '🔊',
   SoundOff    = '🔇',
-  SparkleChar = '✦',
+  SparkleChar   = '✦',
+  ClickToContinue = 'Нажмите, чтобы продолжить',
 }

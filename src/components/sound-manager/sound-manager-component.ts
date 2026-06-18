@@ -33,9 +33,10 @@ export class SoundManagerComponent {
     const enabled = this.logic.toggle();
     if (enabled) {
       ProceduralSounds.unmute();
+      ProceduralSounds.startBgMusic();
     } else {
-      ProceduralSounds.mute();
       ProceduralSounds.stopBgMusic();
+      ProceduralSounds.mute();
     }
     return enabled;
   }

@@ -1,12 +1,10 @@
 import { ApiResponseDto } from '@/types/dto/api-response-dto';
-import { playerMock } from './player.mock';
 import { gameMock } from './game.mock';
 
 type MockHandler = (body?: unknown) => ApiResponseDto<unknown>;
 
 const handlers: Record<string, MockHandler> = {
-  ...(playerMock as Record<string, MockHandler>),
-  ...(gameMock   as Record<string, MockHandler>),
+  ...(gameMock as Record<string, MockHandler>),
 };
 
 export function mockRouter<T>(method: string, path: string, body?: unknown): ApiResponseDto<T> {

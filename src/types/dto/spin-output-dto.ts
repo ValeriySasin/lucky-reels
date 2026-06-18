@@ -7,5 +7,4 @@ export interface SpinOutputDto {
   winAmount:   number;
   winLabel:    string;
   newBalance:  number;
-  spinId:      string;
 }
