@@ -3,10 +3,10 @@ import { gsap } from 'gsap';
 import { GAME_WIDTH, GAME_HEIGHT, ASSETS, REEL_COUNT, SYMBOL_SIZE, REEL_SPACING, SPIN_STAGGER } from '@/types/constants';
 import { GameStateModel } from '@/types/models/game-state-model';
 import { useReelComponent, ReelCtx } from '@/components/reel/use-reel-component';
-import { SpinButtonComponent } from '@/components/spin-button/spin-button-component';
-import { SoundManagerComponent } from '@/components/sound-manager/sound-manager-component';
-import { useSpineChar, SpineCharCtx } from '@/components/spine-character/spine-character-component';
-import { WinBannerComponent } from '@/components/win-banner/win-banner-component';
+import { useSpinButton, SpinButtonCtx } from '@/components/spin-button/use-spin-button';
+import { useSoundManager, SoundManagerCtx } from '@/components/sound-manager/use-sound-manager';
+import { useSpineChar, SpineCharCtx } from '@/components/spine-character/use-spine-character';
+import { useWinBanner, WinBannerCtx } from '@/components/win-banner/use-win-banner';
 import { drawInfoBox, addLabelValue } from '@/utils/draw-helpers';
 import { gameApi } from '@/api';
 import { FontFamily, FontSize } from '@/enums/fonts';
@@ -27,11 +27,11 @@ export class GameScene {
 
   private app: PIXI.Application;
   private reels: ReelCtx[] = [];
-  private spinButton!: SpinButtonComponent;
-  private soundManager!: SoundManagerComponent;
+  private spinButton!: SpinButtonCtx;
+  private soundManager!: SoundManagerCtx;
   private goblin!: SpineCharCtx;
   private balanceText!: PIXI.Text;
-  private winBanner!: WinBannerComponent;
+  private winBanner!: WinBannerCtx;
   private soundBtn!: PIXI.Text;
   private balanceTl: gsap.core.Timeline | null = null;
   private sparkleTls: gsap.core.Timeline[] = [];
@@ -50,12 +50,12 @@ export class GameScene {
     this.createReelArea();
     this.createUI();
 
-    this.winBanner = new WinBannerComponent(CX, FRAME_CY);
+    this.winBanner = useWinBanner(CX, FRAME_CY);
     this.container.addChild(this.winBanner.container);
 
     this.createGoblin();
 
-    this.soundManager = new SoundManagerComponent();
+    this.soundManager = useSoundManager();
     this.soundManager.init();
 
     this.playIntroAnimation();
@@ -176,7 +176,7 @@ export class GameScene {
     this.container.addChild(betBg);
     addLabelValue(this.container, betX, UI_Y, UiText.Bet, `$${this.state.bet}`, CssColor.Gold);
 
-    this.spinButton = new SpinButtonComponent(CX, UI_Y, () => void this.onSpinClicked());
+    this.spinButton = useSpinButton(CX, UI_Y, () => void this.onSpinClicked());
     this.container.addChild(this.spinButton.container);
   }
 
